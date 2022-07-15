@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2021-09-01T11:35:45Z</date>
+    <date>2022-07-15T18:48:50Z</date>
     <groups>
         <group>
             <name>NAS</name>
@@ -14,7 +14,7 @@
             <description>QNAP SNMP Simple Template based on MiB files downloaded form devices.&#13;
 Author Piotr Najman&#13;
 Created : 20210609&#13;
-Last Modified : 20210901</description>
+Last Modified : 20220715</description>
             <groups>
                 <group>
                     <name>NAS</name>
@@ -162,6 +162,42 @@ Last Modified : 20210901</description>
             </items>
             <discovery_rules>
                 <discovery_rule>
+                    <name>Fans</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#FANINDEX}, 1.3.6.1.4.1.24681.1.2.15.1.1, {#FANDESCR}, 1.3.6.1.4.1.24681.1.2.15.1.2]</snmp_oid>
+                    <key>system.fan</key>
+                    <delay>1d</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#FANDESCR} speed</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>1.3.6.1.4.1.24681.1.2.15.1.3.{#FANINDEX}</snmp_oid>
+                            <key>system.fan.speed.[{#FANINDEX}]</key>
+                            <history>7d</history>
+                            <units>RPM</units>
+                            <applications>
+                                <application>
+                                    <name>System</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>REGEX</type>
+                                    <params>([0-9]+)
+\1</params>
+                                </step>
+                            </preprocessing>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last(5m)}&lt;100</expression>
+                                    <name>{#FANDESCR} probably did not work.</name>
+                                    <priority>HIGH</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                </discovery_rule>
+                <discovery_rule>
                     <name>Hard disks</name>
                     <type>SNMP_AGENT</type>
                     <snmp_oid>discovery[{#HDINDEX},1.3.6.1.4.1.24681.1.2.11.1.1,{#HDDESCR},1.3.6.1.4.1.24681.1.2.11.1.2]</snmp_oid>
@@ -182,7 +218,7 @@ Last Modified : 20210901</description>
                             </applications>
                             <trigger_prototypes>
                                 <trigger_prototype>
-                                    <expression>{str(GOOD)}=0</expression>
+                                    <expression>{str(GOOD)}=0 and {str(--)}=0</expression>
                                     <name>{#HDDESCR} SMART status isn't good.</name>
                                     <priority>AVERAGE</priority>
                                 </trigger_prototype>
@@ -191,15 +227,25 @@ Last Modified : 20210901</description>
                         <item_prototype>
                             <name>{#HDDESCR} temperature</name>
                             <type>SNMP_AGENT</type>
-                            <snmp_oid>1.3.6.1.4.1.55062.1.10.2.1.8.{#HDINDEX}</snmp_oid>
+                            <snmp_oid>1.3.6.1.4.1.24681.1.2.11.1.3.{#HDINDEX}</snmp_oid>
                             <key>hd.temp.[{#HDINDEX}]</key>
                             <history>7d</history>
                             <units>C</units>
+                            <description>Old MiB was 1.3.6.1.4.1.55062.1.10.2.1.8.{#HDINDEX}</description>
                             <applications>
                                 <application>
                                     <name>System</name>
                                 </application>
                             </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>REGEX</type>
+                                    <params>([0-9]+)
+\1</params>
+                                    <error_handler>CUSTOM_VALUE</error_handler>
+                                    <error_handler_params>0</error_handler_params>
+                                </step>
+                            </preprocessing>
                         </item_prototype>
                     </item_prototypes>
                 </discovery_rule>
@@ -217,7 +263,6 @@ Last Modified : 20210901</description>
                             <key>system.vol.free.[{#VOLINDEX}]</key>
                             <history>7d</history>
                             <value_type>FLOAT</value_type>
-                            <units>TB</units>
                             <applications>
                                 <application>
                                     <name>System</name>
@@ -232,6 +277,27 @@ Last Modified : 20210901</description>
                             </preprocessing>
                         </item_prototype>
                         <item_prototype>
+                            <name>{#VOLDESCR} status</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>1.3.6.1.4.1.24681.1.2.17.1.6.{#VOLINDEX}</snmp_oid>
+                            <key>system.vol.status.[{#VOLINDEX}]</key>
+                            <history>7d</history>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <applications>
+                                <application>
+                                    <name>System</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{str(Ready)}=0</expression>
+                                    <name>{#VOLDESCR} has not Ready status.</name>
+                                    <priority>HIGH</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
                             <name>Total {#VOLDESCR} size</name>
                             <type>SNMP_AGENT</type>
                             <snmp_oid>1.3.6.1.4.1.24681.1.2.17.1.4.{#VOLINDEX}</snmp_oid>
@@ -239,7 +305,6 @@ Last Modified : 20210901</description>
                             <delay>1d</delay>
                             <history>7d</history>
                             <value_type>FLOAT</value_type>
-                            <units>TB</units>
                             <applications>
                                 <application>
                                     <name>System</name>
@@ -267,14 +332,14 @@ Last Modified : 20210901</description>
                             </applications>
                             <trigger_prototypes>
                                 <trigger_prototype>
-                                    <expression>{min(5m)}&gt;{$VOL.UTIL.WARN}</expression>
-                                    <name>#VOLDESCR} free space is low (used more than {$VOL.UTIL.WARN}% for 5m)</name>
-                                    <priority>WARNING</priority>
-                                </trigger_prototype>
-                                <trigger_prototype>
                                     <expression>{min(5m)}&gt;{$VOL.UTIL.CRIT}</expression>
                                     <name>{#VOLDESCR} free space is critically low (used more than {$VOL.UTIL.CRIT}% for 5m)</name>
                                     <priority>AVERAGE</priority>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{min(5m)}&gt;{$VOL.UTIL.WARN}</expression>
+                                    <name>{#VOLDESCR} free space is low (used more than {$VOL.UTIL.WARN}% for 5m)</name>
+                                    <priority>WARNING</priority>
                                 </trigger_prototype>
                             </trigger_prototypes>
                         </item_prototype>
@@ -284,7 +349,6 @@ Last Modified : 20210901</description>
                             <key>system.vol.used.[{#VOLINDEX}]</key>
                             <history>7d</history>
                             <value_type>FLOAT</value_type>
-                            <units>TB</units>
                             <params>last(system.vol.total.[{#VOLINDEX}])-last(system.vol.free.[{#VOLINDEX}])</params>
                             <applications>
                                 <application>
@@ -309,6 +373,7 @@ Last Modified : 20210901</description>
                             <show_work_period>NO</show_work_period>
                             <show_triggers>NO</show_triggers>
                             <type>EXPLODED</type>
+                            <show_legend>NO</show_legend>
                             <show_3d>YES</show_3d>
                             <graph_items>
                                 <graph_item>
@@ -345,7 +410,7 @@ Last Modified : 20210901</description>
                 </macro>
                 <macro>
                     <macro>{$VOL.UTIL.CRIT}</macro>
-                    <value>90</value>
+                    <value>95</value>
                 </macro>
                 <macro>
                     <macro>{$VOL.UTIL.DIS}</macro>
@@ -353,7 +418,7 @@ Last Modified : 20210901</description>
                 </macro>
                 <macro>
                     <macro>{$VOL.UTIL.WARN}</macro>
-                    <value>80</value>
+                    <value>90</value>
                 </macro>
             </macros>
         </template>
@@ -384,4 +449,3 @@ Last Modified : 20210901</description>
         </graph>
     </graphs>
 </zabbix_export>
-

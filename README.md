@@ -12,12 +12,14 @@ __Zabbix 5.0LTS SNMP template for monitoring QNAP TS-431P / TS-x41 / TS-x51U / T
 2. Volumes (discovery)
    - Item prototypes
      - Free size
+     - Status
      - Total size
      - Used size
      - Usage
    - Trigger prototypes
      - Free space is critically low
      - Free spase is low
+     - Not Ready status
      - Volume is full
    - Graph prototypes
      - Volume space
@@ -27,10 +29,15 @@ __Zabbix 5.0LTS SNMP template for monitoring QNAP TS-431P / TS-x41 / TS-x51U / T
      - Temperature
    - Trigger prototypes
      - SMART status isn't good
-5. Triggers
+5. Fans (discovery)
+   - Item prototypes
+     - Speed
+   - Trigger prototypes
+     - Speed to low
+6. Triggers
    - Firmware upgrade available
    - High CPU utilisation
    - High memory utilisation
-6. Graphs
+7. Graphs
    - Resources Utilisation
 
